@@ -112,6 +112,7 @@ int MAX17055::readMax17055(MAX17055::reg_t reg)
     char buf[2];
     if (this->readReg(reg, buf, 2))
     {
+      printf("MAX17055 I2C read Error\r\n");
       return 0;
     }
 
@@ -123,6 +124,7 @@ int MAX17055::writeReg(reg_t reg, char value, bool verify)
     char buf[] = { (char)reg, value };
 
     if (this->i2c->write(addr, buf, sizeof(buf))) {
+        printf("MAX17055 I2C write Error\r\n");
         return MAX17055_ERROR;
     }
 
@@ -142,18 +144,27 @@ int MAX17055::writeReg(reg_t reg, uint16_t value, bool verify)
     attempt = 0;
 
     do {
-        if (this->i2c->write(addr, wbuf, 3)) return MAX17055_ERROR;
+        if (this->i2c->write(addr, wbuf, 3)) {
+          printf("MAX17055 I2C write Error\r\n");
+          return MAX17055_ERROR;
+          }
 
         if (!verify) break;
 
         // Thread::wait(1);
         wait_us(1000);
 
-        if (this->i2c->read(addr, rbuf, 2)) return MAX17055_ERROR;
+        if (this->i2c->read(addr, rbuf, 2)) {
+          printf("MAX17055 I2C read Error\r\n");
+          return MAX17055_ERROR;
+          }
 
     } while ((((rbuf[1] << 8) | rbuf[0]) != value) && (attempt++ < 3));
 
-    if (attempt == 3) return MAX17055_ERROR;
+    if (attempt == 3){
+      printf("MAX17055 I2C read FINAL Error\r\n");
+      return MAX17055_ERROR;
+    } 
 
     return MAX17055_NO_ERROR;
 }
@@ -163,10 +174,12 @@ int MAX17055::readReg(reg_t reg, char *value)
     char buf[] = { (char)reg };
 
     if (this->i2c->write(addr, buf, sizeof(buf))) {
+      printf("MAX17055 I2C write Error\r\n");
         return MAX17055_ERROR;
     }
 
     if (this->i2c->read(addr, value, 1)) {
+      printf("MAX17055 I2C read Error\r\n");
         return MAX17055_ERROR;
     }
 
@@ -178,10 +191,12 @@ int MAX17055::readReg(reg_t reg, char *buf, int len)
     *buf = (char)reg;
 
     if (this->i2c->write(addr, buf, 1)) {
+      printf("MAX17055 I2C write Error\r\n");
         return MAX17055_ERROR;
     }
 
     if (this->i2c->read(addr, buf, len)) {
+      printf("MAX17055 I2C read Error\r\n");
         return MAX17055_ERROR;
     }
 
